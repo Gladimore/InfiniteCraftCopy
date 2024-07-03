@@ -1,6 +1,6 @@
-# InfiniteCraft
+# InfiniteCraft Copy
 
-InfiniteCraft is an element-combining game built using Node.js, Express, and PostgreSQL. Players can discover new elements by combining existing ones, and the results are enhanced with emoji representations.
+InfiniteCraft is an element-combining game.
 
 ## Features
 
