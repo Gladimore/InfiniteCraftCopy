@@ -13,9 +13,11 @@ const cohere = new CohereClient({
 const pgClient = new Client({
   connectionString: process.env.DATABASE_URL
 });
-pgClient.connect();
+pgClient.connect().then(() => {
+  console.log('Connected to PostgreSQL');
+  createTable();
+}).catch(err => console.error('Connection error', err.stack));
 
-// Function to create table if not exists
 async function createTable() {
   try {
     const query = `
@@ -26,15 +28,12 @@ async function createTable() {
         combination TEXT
       );
     `;
-    const res = await pgClient.query(query);
+    await pgClient.query(query);
     console.log('Table "combinations" created successfully');
   } catch (error) {
     console.error('Error creating table:', error);
   }
 }
-
-// Call createTable function to ensure table exists
-createTable();
 
 // Function to save combination and emoji to database
 const saveCombinationAndEmojiToDB = async (elements, emojiSymbol, combination) => {
@@ -85,15 +84,18 @@ async function combineElements(text1, key, text2) {
         return `${existingCombination.emoji} ${existingCombination.combination}`;
       } else {
         // Call AI to get combined text
-        const response = await cohere.chat({ message: `Combine these elements: ${text1}, ${text2}. What is the result of the combinations being together? Short and straightforward, as only word. For example: primate and evolution: Human`});
+        const response = await cohere.chat({
+          message: `Describe the outcome of '${text1} + ${text2} = _____' in one word.`,
+        });
         const combinedText = response.text.replace(/[^\w\s]/gi, '');
 
         // Get emoji or fetch from AI
         let emojiSymbol = await getEmojiFromDB(combinedText);
         if (!emojiSymbol) {
           emojiSymbol = await textToEmoji(combinedText);
-          await saveCombinationAndEmojiToDB([text1, text2], emojiSymbol, combinedText);
         }
+
+        await saveCombinationAndEmojiToDB([text1, text2], emojiSymbol, combinedText);
 
         return `${emojiSymbol} ${combinedText}`;
       }
@@ -128,23 +130,6 @@ const getEmojiFromDB = async (text) => {
   }
 };
 
-// Function to save emoji to database
-const saveEmojiToDB = async (text, emojiSymbol) => {
-  try {
-    const query = `
-      INSERT INTO combinations (elements, emoji, combination)
-      VALUES ($1, $2, $3)
-      RETURNING *;
-    `;
-    const values = [[], emojiSymbol, text];
-    const res = await pgClient.query(query, values);
-    console.log('Emoji saved to PostgreSQL:', res.rows[0]);
-  } catch (error) {
-    console.error('Error saving emoji to PostgreSQL:', error);
-    throw error;
-  }
-};
-
 // Function to convert text to emoji
 async function textToEmoji(text) {
   const emojiName = text.toLowerCase().replace(/[^\w\s]/gi, '');
@@ -161,7 +146,6 @@ async function textToEmoji(text) {
           message: `What emoji is this? ${text}. And only give me the emoji.`,
         });
         const emojiSymbol = res.text;
-        await saveEmojiToDB(text, emojiSymbol);
         return emojiSymbol;
       }
     } catch (error) {
