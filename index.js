@@ -85,9 +85,7 @@ async function combineElements(text1, key, text2) {
         return `${existingCombination.emoji} ${existingCombination.combination}`;
       } else {
         // Call AI to get combined text
-        const response = await cohere.chat({
-          message: `Combine these elements: ${text1}, ${text2}. What is the result of the combinations being together? Short and straightforward, as only word.`,
-        });
+        const response = await cohere.chat({ message: `Combine these elements: ${text1}, ${text2}. What is the result of the combinations being together? Short and straightforward, as only word. For example: primate and evolution: Human`});
         const combinedText = response.text.replace(/[^\w\s]/gi, '');
 
         // Get emoji or fetch from AI
