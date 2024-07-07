@@ -85,7 +85,19 @@ async function combineElements(text1, key, text2) {
       } else {
         // Call AI to get combined text
         const response = await cohere.chat({
-          message: `Describe the outcome of '${text1} + ${text2} = _____' in one word.`,
+          message: `You are an AI that combines items similar to the game Little Alchemy. 
+          When given two items, you should return the result of combining them. Return only ONE word.
+
+          Examples:
+          - water and fire -> Steam
+          - earth and water -> Mud
+          - air and fire -> Energy
+          - fire and earth -> Lava
+          - water and earth -> Island
+          - earth and air -> Dust
+          - primate and evolution -> Human
+
+          Now, combine these items: ${text1} and ${text2}`,
         });
         const combinedText = response.text.replace(/[^\w\s]/gi, '');
 
@@ -143,7 +155,15 @@ async function textToEmoji(text) {
         return emojiFromDB;
       } else {
         const res = await cohere.chat({
-          message: `What emoji is this? ${text}. And only give me the emoji.`,
+          message: `You are an AI that converts text to corresponding emojis.
+  Here are some examples:
+  - mud -> 💩
+  - water -> 💧
+  - fire -> 🔥
+  - earth -> 🌍
+  - air -> 🌬️
+
+  Now, convert this text to emoji: ${text}`,
         });
         const emojiSymbol = res.text;
         return emojiSymbol;
@@ -162,7 +182,7 @@ app.get('/api/combine', async (req, res) => {
   const text2 = req.query.ele2;
 
   try {
-    const result = await combineElements(text1, key, text2);
+    const result = await combineElements(text1.toLowerCase(), key, text2.toLowerCase());
     res.json(result);
   } catch (error) {
     console.error('Error combining elements:', error);
