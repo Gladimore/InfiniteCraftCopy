@@ -1,5 +1,5 @@
 const express = require('express');
-const funcs = require('./funcs.js');
+const { combineElements } = require('./funcs.js');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -11,7 +11,7 @@ app.get('/api/combine', async (req, res) => {
   const text2 = req.query.ele2;
 
   try {
-    const result = await funcs.combineElements(text1.toLowerCase(), key, text2.toLowerCase());
+    const result = await combineElements(text1.toLowerCase(), key, text2.toLowerCase());
     res.json(result);
   } catch (error) {
     console.error('Error combining elements:', error);
