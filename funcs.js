@@ -98,7 +98,7 @@ async function combineElements(text1, key, text2) {
       // Check if combination exists in database
       const existingCombination = await getCombinationAndEmojiFromDB([text1, text2]);
       if (existingCombination) {
-        return `${existingCombination.emoji} ${existingCombination.combination}`;
+        return {"combination": existingCombination.combination, "emoji": existingCombination.emoji, "new": false};
       } else {
         // Call AI to get combined text
         const response = await cohere.chat({
@@ -115,7 +115,7 @@ async function combineElements(text1, key, text2) {
 
         await saveCombinationAndEmojiToDB([text1, text2], emojiSymbol, combinedText);
 
-        return `${emojiSymbol} ${combinedText}`;
+        return {"combo": combinedText, "emoji": emojiSymbol, "new": true};
       }
     } catch (error) {
       console.error('Error combining elements:', error);
