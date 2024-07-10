@@ -115,7 +115,7 @@ async function combineElements(text1, key, text2) {
 
         await saveCombinationAndEmojiToDB([text1, text2], emojiSymbol, combinedText);
 
-        return {"combo": combinedText, "emoji": emojiSymbol, "new": true};
+        return {"combination": combinedText, "emoji": emojiSymbol, "new": true};
       }
     } catch (error) {
       console.error('Error combining elements:', error);
