@@ -2,7 +2,7 @@ const Together = require("together-ai");
 const fs = require("fs");
 const { Client } = require('pg');
 
-const prompt = fs.readFileSync("./prompt.txt", "utf8");
+const prompt = fs.readFileSync("/prompt.txt", "utf8");
 
 const together = new Together({ 
   apiKey: process.env.TOGETHER_API_KEY });
