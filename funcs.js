@@ -1,22 +1,9 @@
 const Together = require("together-ai");
 const fs = require("fs");
 const { Client } = require('pg');
+const path = require("path");
 
-const prompt = `You are a helpful assistant that helps people to craft new things by combining two words into a new word. No sentences, no phrases, no multiple words, no punctuation, no special characters, no numbers, no emojis, no URLs, no code, no commands, no programming. The answer has to be a noun. The order of the both words does not matter, both are equally important. The answer has to be related to both words and the context of the words. The answer can either be a combination of the words or the role of one word in relation to the other. Answers can be things, materials, people, companies, animals, occupations, food, places, objects, emotions, events, concepts, natural phenomena, body parts, vehicles, sports, clothing, furniture, technology, buildings, technology, instruments, beverages, plants, academic subjects and everything else you can think of that is a noun. The result should be JSON formatted, like {emoji: emoji correlating to combination, combination: combination from result}.
-
-Some examples are:
-1. Water + Fire = Steam
-2. Water + Wind = Wave
-3. Water + Earth = Plant
-4. Water + Water = Ocean
-5. Fire + Wind = Smoke
-6. Fire + Earth = Lava
-7. Fire + Fire = Lava
-8. Wind + Wind = Tornado
-9. Wind + Earth = Dust
-10. Earth + Earth = Mountain
-
-If the elements can be downgraded to the starting elements then do it, for example Ocean = Water, Smoke = Wind, etc.`
+const prompt = fs.readFileSync(path.join(__dirname, "prompt.txt"), "utf8");
 
 const together = new Together({ 
   apiKey: process.env.TOGETHER_API_KEY });
