@@ -15,7 +15,7 @@ app.get('/api/combine', async (req, res) => {
     res.json(result);
   } catch (error) {
     console.error('Error combining elements:', error);
-    res.sendStatus(500);
+    res.sendStatus(500).send(`Error: ${error}`);
   }
 });
 
