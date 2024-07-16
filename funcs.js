@@ -120,14 +120,20 @@ async function combineElements(key, element1, element2) {
         repetition_penalty: 1,
         stop: ["</s>"],
       });
-      const js = JSON.parse(response.choices[0].message.content);
+
+      const msg = response.choices[0].message.content;
+      console.log("Message: ", msg);
+      
+      const js = JSON.parse(msg);
+      console.log("JSON: ", js);
 
       js.new = checkCombinationExists(js.combination);
       
       if (!js.elements) js.elements = [w1, w2];
     
       await saveCombinationAndEmojiToDB(js.elements, js.emoji, js.combination);
-
+      
+      console.log("New element created! ", js);
       return js;
     } else return combo
   } else throw new Error('Invalid key');
