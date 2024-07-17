@@ -108,17 +108,20 @@ async function combineElements(key, element1, element2) {
         messages: [
           {
             role: "system",
-            content: prompt
+            content: prompt,
           },
-          {role: "user", content: `Combine “${w1}” and “${w2}”, the first letter of the combination should be capitalized.`}
+          {
+            role: "user",
+            content: `Combine “${w1}” and “${w2}”, the first letter of the combination should be capitalized, and ONLY THE JSON!`,
+          },
         ],
-        model: "mistralai/Mistral-7B-Instruct-v0.3",
+        model: "meta-llama/Llama-3-70b-chat-hf",
         max_tokens: 512,
-        temperature: 0.3,
+        temperature: 0.7,
         top_p: 0.7,
         top_k: 50,
         repetition_penalty: 1,
-        stop: ["</s>"],
+        stop: ["<|eot_id|>"]
       });
 
       const msg = response.choices[0].message.content;
