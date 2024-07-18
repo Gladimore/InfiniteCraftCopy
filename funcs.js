@@ -1,5 +1,5 @@
 const Together = require("together-ai");
-const fs = require("fs");
+const { readFileSync } = require("fs");
 const { Client } = require('pg');
 const path = require("path");
 
@@ -8,7 +8,14 @@ function join(name) {
 }
 
 function read(name) {
-  return fs.readFileSync(join(name), "utf8");
+  const assets = path.resolve(process.cwd(), "assets");
+  
+  const file = readFileSync(
+    path.join(assets, name),
+    "utf8"
+  );
+  
+  return file;
 }
 
 const prompt = read("prompt.txt")
@@ -107,11 +114,11 @@ const getCombinationAndEmojiFromDB = async (elements) => {
 async function combineElements(key, element1, element2) {
   const sorted = [element1, element2].sort();
   const [w1, w2] = sorted;
-  
+
   if (key == process.env.KEY && w1 && w2) {
     let combo = await getCombinationAndEmojiFromDB([w1, w2])
     if (combo) combo.new = false;
-    
+
     if (!combo) {
       const response = await together.chat.completions.create({
         messages: [
@@ -135,16 +142,16 @@ async function combineElements(key, element1, element2) {
 
       const msg = response.choices[0].message.content;
       console.log("Message: ", msg);
-      
+
       let js = JSON.parse(msg);
       console.log("JSON: ", js);
 
       js.new = await checkCombinationExists(js.combination);
-      
+
       if (!js.elements) js.elements = [w1, w2];
-    
+
       await saveCombinationAndEmojiToDB(js.elements, js.emoji, js.combination);
-      
+
       console.log("New element created! ", js);
       return {combination: js.combination, emoji: js.emoji, new: js.new};
     } else return combo
