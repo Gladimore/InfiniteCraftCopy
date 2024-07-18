@@ -3,7 +3,15 @@ const fs = require("fs");
 const { Client } = require('pg');
 const path = require("path");
 
-const prompt = fs.readFileSync(path.join(__dirname, "prompt.txt"), "utf8");
+function join(name) {
+  return path.join(__dirname, name);
+}
+
+function read(name) {
+  return fs.readFileSync(join(name), "utf8");
+}
+
+const prompt = read("prompt.txt")
 
 const together = new Together({ 
   apiKey: process.env.TOGETHER_API_KEY });
@@ -101,7 +109,8 @@ async function combineElements(key, element1, element2) {
   const [w1, w2] = sorted;
   
   if (key == process.env.KEY && w1 && w2) {
-    const combo = await getCombinationAndEmojiFromDB([w1, w2])
+    let combo = await getCombinationAndEmojiFromDB([w1, w2])
+    if (combo) combo.new = false;
     
     if (!combo) {
       const response = await together.chat.completions.create({
@@ -127,17 +136,17 @@ async function combineElements(key, element1, element2) {
       const msg = response.choices[0].message.content;
       console.log("Message: ", msg);
       
-      const js = JSON.parse(msg);
+      let js = JSON.parse(msg);
       console.log("JSON: ", js);
 
-      js.new = checkCombinationExists(js.combination);
+      js.new = await checkCombinationExists(js.combination);
       
       if (!js.elements) js.elements = [w1, w2];
     
       await saveCombinationAndEmojiToDB(js.elements, js.emoji, js.combination);
       
       console.log("New element created! ", js);
-      return js;
+      return {combination: js.combination, emoji: js.emoji, new: js.new};
     } else return combo
   } else throw new Error('Invalid key');
 }
