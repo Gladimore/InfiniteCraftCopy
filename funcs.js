@@ -1,21 +1,14 @@
 const Together = require("together-ai");
 const { readFileSync } = require("fs");
 const { Client } = require('pg');
-const path = require("path");
+const { join } = require("path");
 
-function join(name) {
-  return path.join(__dirname, name);
+function getPath(name) {
+  return join(process.cwd(), name);
 }
 
 function read(name) {
-  const assets = path.resolve(process.cwd(), "assets");
-  
-  const file = readFileSync(
-    path.join(assets, name),
-    "utf8"
-  );
-  
-  return file;
+  return readFileSync(join(name));
 }
 
 const prompt = read("prompt.txt")
