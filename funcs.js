@@ -1,10 +1,10 @@
 const Together = require("together-ai");
 const { readFileSync } = require("fs");
 const { Client } = require('pg');
-const { join } = require("path");
+const path = require("path");
 
-function getPath(name) {
-  return join(process.cwd(), name);
+function join(name) {
+  return path.join(process.cwd(), name);
 }
 
 function read(name) {
