@@ -8,10 +8,10 @@ function join(name) {
 }
 
 function read(name) {
-  return readFileSync(join(name), "utf8");
+  return readFileSync(join(name), 'utf8');
 }
 
-const prompt = readFileSync(process.cwd() + '/prompt.txt', 'utf8');
+const prompt = read('/prompt.txt')
 
 const together = new Together({ 
   apiKey: process.env.TOGETHER_API_KEY });
