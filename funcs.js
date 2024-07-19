@@ -1,17 +1,8 @@
 const Together = require("together-ai");
 const { readFileSync } = require("fs");
 const { Client } = require('pg');
-const path = require("path");
 
-function join(name) {
-  return path.join(process.cwd(), name);
-}
-
-function read(name) {
-  return readFileSync(join(name), 'utf8');
-}
-
-const prompt = read('/prompt.txt')
+const prompt = readFileSync(process.cwd() + '/prompt.txt', 'utf8');
 
 const together = new Together({ 
   apiKey: process.env.TOGETHER_API_KEY });
