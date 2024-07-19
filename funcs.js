@@ -1,5 +1,5 @@
 const Together = require("together-ai");
-const { readFileSync } = require("fs");
+const { readFile } = require("fs");
 const { Client } = require('pg');
 const path = require("path");
 
@@ -8,7 +8,7 @@ function join(name) {
 }
 
 function read(name) {
-  return readFileSync(join(name));
+  return readFile(join(name), "utf8");
 }
 
 const prompt = read("prompt.txt")
