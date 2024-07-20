@@ -1,8 +1,16 @@
 const Together = require("together-ai");
 const { readFileSync } = require("fs");
 const { Client } = require('pg');
+const { parse } = JSON;
 
 const prompt = readFileSync(process.cwd() + '/prompt.txt', 'utf8');
+
+const fine_tune = parse(readFileSync(process.cwd() + '/training.json', 'utf8')).map(combination => {
+  let data = convertString(combination)
+  data.elements.sort()
+
+  return data
+});
 
 const together = new Together({ 
   apiKey: process.env.TOGETHER_API_KEY });
@@ -15,6 +23,27 @@ pgClient.connect().then(() => {
   console.log('Connected to PostgreSQL');
   createTable();
 }).catch(err => console.error('Connection error', err.stack));
+
+function convertString(input) {
+    // Split the string by spaces
+    const parts = input.split(" ");
+
+    // Identify the elements and the combination parts
+    const elements = parts.slice(0, 2); // Only take the first two parts
+    const emoji = parts[2].substring(0,2);
+    const combination = parts[2].substring(2);
+
+    // Construct the result object
+    const result = {
+        elements: elements,
+        combination: {
+            emoji: emoji,
+            combination: combination
+        }
+    };
+
+    return result;
+}
 
 async function createTable() {
   try {
@@ -110,18 +139,35 @@ async function combineElements(key, element1, element2) {
             role: "system",
             content: prompt,
           },
+          ...fine_tune
+            .map((item) => {
+              const { elements, combination } = item;
+              const [word1, word2] = elements.sort();
+
+              return [
+                {
+                  role: "user",
+                  content: `Combine “${word1}” and “${word2}”, the first letter of the combination should be capitalized, and ONLY THE JSON!`,
+                },
+                {
+                  role: "assistant",
+                  content: JSON.stringify(combination),
+                },
+              ];
+            })
+            .flat(),
           {
             role: "user",
-            content: `Combine “${w1}” and “${w2}”, the first letter of the combination should be capitalized, and ONLY THE JSON!`,
+            content: `Combine "${w1}" and "${w2}", the first letter of the combination should be capitalized, and ONLY THE JSON!`,
           },
         ],
         model: "meta-llama/Llama-3-70b-chat-hf",
         max_tokens: 512,
-        temperature: 0.7,
+        temperature: 0.3,
         top_p: 0.7,
         top_k: 50,
         repetition_penalty: 1,
-        stop: ["<|eot_id|>"]
+        stop: ["<|eot_id|>"],
       });
 
       const msg = response.choices[0].message.content;
