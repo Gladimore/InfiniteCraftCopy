@@ -142,7 +142,7 @@ async function combineElements(key, element1, element2) {
       let js = JSON.parse(msg);
       console.log("JSON: ", js);
 
-      js.new = await checkCombinationExists(js.combination);
+      js.new = !(await checkCombinationExists(js.combination));
 
       if (!js.elements) js.elements = [w1, w2];
 
