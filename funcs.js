@@ -1,49 +1,25 @@
 const Together = require("together-ai");
 const { readFileSync } = require("fs");
-const { Client } = require('pg');
+const { Client } = require("pg");
 const { parse } = JSON;
 
-const prompt = readFileSync(process.cwd() + '/prompt.txt', 'utf8');
+const prompt = parse(readFileSync(process.cwd() + "/prompt.json", "utf8"));
 
-const fine_tune = parse(readFileSync(process.cwd() + '/training.json', 'utf8')).map(combination => {
-  let data = convertString(combination)
-  data.elements.sort()
-
-  return data
+const together = new Together({
+  apiKey: process.env.TOGETHER_API_KEY,
 });
-
-const together = new Together({ 
-  apiKey: process.env.TOGETHER_API_KEY });
 
 const pgClient = new Client({
-  connectionString: process.env.DATABASE_URL
+  connectionString: process.env.DATABASE_URL,
 });
 
-pgClient.connect().then(() => {
-  console.log('Connected to PostgreSQL');
-  createTable();
-}).catch(err => console.error('Connection error', err.stack));
-
-function convertString(input) {
-    // Split the string by spaces
-    const parts = input.split(" ");
-
-    // Identify the elements and the combination parts
-    const elements = parts.slice(0, 2); // Only take the first two parts
-    const emoji = parts[2].substring(0,2);
-    const combination = parts[2].substring(2);
-
-    // Construct the result object
-    const result = {
-        elements: elements,
-        combination: {
-            emoji: emoji,
-            combination: combination
-        }
-    };
-
-    return result;
-}
+pgClient
+  .connect()
+  .then(() => {
+    console.log("Connected to PostgreSQL");
+    createTable();
+  })
+  .catch((err) => console.error("Connection error", err.stack));
 
 async function createTable() {
   try {
@@ -58,12 +34,16 @@ async function createTable() {
     await pgClient.query(query);
     console.log('Table "combinations" created successfully');
   } catch (error) {
-    console.error('Error creating table:', error);
+    console.error("Error creating table:", error);
   }
 }
 
 // Function to save combination and emoji to database
-const saveCombinationAndEmojiToDB = async (elements, emojiSymbol, combination) => {
+const saveCombinationAndEmojiToDB = async (
+  elements,
+  emojiSymbol,
+  combination,
+) => {
   try {
     const query = `
       INSERT INTO combinations (elements, emoji, combination)
@@ -72,9 +52,9 @@ const saveCombinationAndEmojiToDB = async (elements, emojiSymbol, combination) =
     `;
     const values = [elements, emojiSymbol, combination];
     const res = await pgClient.query(query, values);
-    console.log('Combination and emoji saved to PostgreSQL:', res.rows[0]);
+    console.log("Combination and emoji saved to PostgreSQL:", res.rows[0]);
   } catch (error) {
-    console.error('Error saving combination and emoji to PostgreSQL:', error);
+    console.error("Error saving combination and emoji to PostgreSQL:", error);
     throw error;
   }
 };
@@ -90,14 +70,14 @@ const checkCombinationExists = async (word) => {
     const res = await pgClient.query(query, values);
 
     if (res.rows.length > 0) {
-      console.log('Combination found in PostgreSQL:', res.rows);
+      console.log("Combination found in PostgreSQL:", res.rows);
       return true;
     } else {
-      console.log('No combination found for the word:', word);
+      console.log("No combination found for the word:", word);
       return false;
     }
   } catch (error) {
-    console.error('Error checking combination in PostgreSQL:', error);
+    console.error("Error checking combination in PostgreSQL:", error);
     throw error;
   }
 };
@@ -112,14 +92,20 @@ const getCombinationAndEmojiFromDB = async (elements) => {
     const values = [elements];
     const res = await pgClient.query(query, values);
     if (res.rows.length > 0) {
-      console.log('Combination and emoji retrieved from PostgreSQL:', res.rows[0]);
+      console.log(
+        "Combination and emoji retrieved from PostgreSQL:",
+        res.rows[0],
+      );
       return res.rows[0];
     } else {
-      console.log('No combination and emoji found in PostgreSQL');
+      console.log("No combination and emoji found in PostgreSQL");
       return null;
     }
   } catch (error) {
-    console.error('Error retrieving combination and emoji from PostgreSQL:', error);
+    console.error(
+      "Error retrieving combination and emoji from PostgreSQL:",
+      error,
+    );
     throw error;
   }
 };
@@ -129,41 +115,21 @@ async function combineElements(key, element1, element2) {
   const [w1, w2] = sorted;
 
   if (key == process.env.KEY && w1 && w2) {
-    let combo = await getCombinationAndEmojiFromDB([w1, w2])
+    let combo = await getCombinationAndEmojiFromDB([w1, w2]);
     if (combo) combo.new = false;
 
     if (!combo) {
-      const response = await together.chat.completions.create({
-        messages: [
-          {
-            role: "system",
-            content: prompt,
-          },
-          ...fine_tune
-            .map((item) => {
-              const { elements, combination } = item;
-              const [word1, word2] = elements.sort();
+      let messages = prompt;
+      messages.push({
+        role: "user",
+        content: `Combine "${w1}" and "${w2}", the first letter of the combination should be capitalized, and ONLY THE JSON!`,
+      });
 
-              return [
-                {
-                  role: "user",
-                  content: `Combine “${word1}” and “${word2}”, the first letter of the combination should be capitalized, and ONLY THE JSON!`,
-                },
-                {
-                  role: "assistant",
-                  content: JSON.stringify(combination),
-                },
-              ];
-            })
-            .flat(),
-          {
-            role: "user",
-            content: `Combine "${w1}" and "${w2}", the first letter of the combination should be capitalized, and ONLY THE JSON!`,
-          },
-        ],
-        model: "meta-llama/Llama-3-70b-chat-hf",
+      const response = await together.chat.completions.create({
+        messages: messages,
+        model: "meta-llama/Meta-Llama-3-70B-Instruct-Lite",
         max_tokens: 512,
-        temperature: 0.3,
+        temperature: 0.7,
         top_p: 0.7,
         top_k: 50,
         repetition_penalty: 1,
@@ -183,9 +149,9 @@ async function combineElements(key, element1, element2) {
       await saveCombinationAndEmojiToDB(js.elements, js.emoji, js.combination);
 
       console.log("New element created! ", js);
-      return {combination: js.combination, emoji: js.emoji, new: js.new};
-    } else return combo
-  } else throw new Error('Invalid key');
+      return { combination: js.combination, emoji: js.emoji, new: js.new };
+    } else return combo;
+  } else throw new Error("Invalid key");
 }
 
 module.exports = combineElements;
